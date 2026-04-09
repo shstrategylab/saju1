@@ -6,7 +6,7 @@
 <title>정통명리학 사주풀이 — 접수</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500;700&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -587,21 +587,33 @@
           <div class="error-msg">생년월일을 입력해주세요.</div>
         </div>
 
-        <div class="grid-2">
-          <div class="field" id="field-birthtime">
-            <label>출생 시각 <span class="req">*</span></label>
-            <input type="time" id="birthtime" step="600">
-            <div class="error-msg">출생 시각을 선택해주세요.</div>
+        <div class="field" id="field-birthtime">
+          <label>출생 시각 <span class="req">*</span></label>
+          <div class="radio-group" style="margin-bottom:0.6rem;">
+            <div class="radio-btn">
+              <input type="radio" name="ampm" id="ampm-am" value="오전">
+              <label for="ampm-am">오전 (子~午)</label>
+            </div>
+            <div class="radio-btn">
+              <input type="radio" name="ampm" id="ampm-pm" value="오후">
+              <label for="ampm-pm">오후 (午~子)</label>
+            </div>
+            <div class="radio-btn">
+              <input type="radio" name="ampm" id="ampm-unknown" value="모름" checked>
+              <label for="ampm-unknown">모름</label>
+            </div>
           </div>
-          <div class="field">
-            <label>시각 확실성</label>
-            <select id="timeCertainty">
-              <option value="정확">정확한 시각 알고 있음</option>
-              <option value="근사">대략적으로 앎 (±1시간)</option>
-              <option value="오전오후">오전/오후만 앎</option>
-              <option value="모름">전혀 모름</option>
-            </select>
-          </div>
+          <input type="time" id="birthtime" step="600" placeholder="정확한 시각을 아는 경우 입력">
+          <div class="error-msg">출생 시각 또는 오전/오후를 선택해주세요.</div>
+        </div>
+        <div class="field">
+          <label>시각 확실성</label>
+          <select id="timeCertainty">
+            <option value="정확">정확한 시각 알고 있음</option>
+            <option value="근사">대략적으로 앎 (±1시간)</option>
+            <option value="오전오후">오전/오후만 앎</option>
+            <option value="모름">전혀 모름</option>
+          </select>
         </div>
 
         <div class="field">
@@ -666,29 +678,9 @@
       </div>
     </div>
 
-    <!-- 04. 삶의 사건 회고록 -->
+    <!-- 04. 추가 메시지 -->
     <div class="section">
-      <div class="section-title">삶의 사건 회고록 <span class="num">04</span></div>
-      <div class="form-card">
-        <p style="font-size:13px;color:var(--ink-muted);margin-bottom:1rem;line-height:1.8;">
-          기억에 남는 삶의 주요 사건을 연도·나이와 함께 적어주세요.<br>
-          실제 사건과 대운·세운을 대조해 더 정밀한 풀이를 드릴 수 있습니다. <em style="opacity:0.7;">(선택)</em>
-        </p>
-
-        <div class="memoir-entries" id="memoirEntries">
-          <div class="memoir-row">
-            <input type="text" placeholder="연도/나이" class="memoir-year">
-            <input type="text" placeholder="사건 내용 (예: 이직, 결혼, 사업 시작…)" class="memoir-event">
-            <button type="button" class="btn-remove" onclick="removeMemoir(this)">×</button>
-          </div>
-        </div>
-        <button type="button" class="btn-add" onclick="addMemoir()">+ 사건 추가</button>
-      </div>
-    </div>
-
-    <!-- 05. 추가 메시지 -->
-    <div class="section">
-      <div class="section-title">추가 전달 사항 <span class="num">05</span></div>
+      <div class="section-title">추가 전달 사항 <span class="num">04</span></div>
       <div class="form-card">
         <div class="field">
           <label>궁금하신 점 또는 특별히 살펴봐 주셨으면 하는 부분 <span class="opt">(선택)</span></label>
@@ -747,6 +739,7 @@
   const firebaseConfig = {
     apiKey: "AIzaSyAE8rAFComcr9rHWQAIL_lrV5bQd8ucmU8",
     authDomain: "saju-reading.firebaseapp.com",
+    databaseURL: "https://saju-reading-default-rtdb.firebaseio.com",
     projectId: "saju-reading",
     storageBucket: "saju-reading.firebasestorage.app",
     messagingSenderId: "1000224028532",
@@ -755,30 +748,8 @@
   };
 
   firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+  const db = firebase.database();
   firebase.analytics();
-
-  // ── 회고록 추가/삭제 ──
-  function addMemoir() {
-    const container = document.getElementById('memoirEntries');
-    const row = document.createElement('div');
-    row.className = 'memoir-row';
-    row.innerHTML = `
-      <input type="text" placeholder="연도/나이" class="memoir-year">
-      <input type="text" placeholder="사건 내용" class="memoir-event">
-      <button type="button" class="btn-remove" onclick="removeMemoir(this)">×</button>
-    `;
-    container.appendChild(row);
-  }
-
-  function removeMemoir(btn) {
-    const rows = document.querySelectorAll('.memoir-row');
-    if (rows.length > 1) {
-      btn.closest('.memoir-row').remove();
-    } else {
-      btn.closest('.memoir-row').querySelectorAll('input').forEach(i => i.value = '');
-    }
-  }
 
   // ── 접수번호 생성 ──
   function genId() {
@@ -805,7 +776,16 @@
     checkField('field-name', 'name', v => v.length > 0);
     checkField('field-age', 'age', v => v.length > 0 && Number(v) > 0);
     checkField('field-birthdate', 'birthdate', v => v.length > 0);
-    checkField('field-birthtime', 'birthtime', v => v.length > 0);
+
+    const ampm = document.querySelector('input[name="ampm"]:checked');
+    const birthtimeVal = document.getElementById('birthtime').value;
+    const fieldBirthtime = document.getElementById('field-birthtime');
+    if (!birthtimeVal && (!ampm || ampm.value === '모름')) {
+      fieldBirthtime.classList.add('has-error');
+      ok = false;
+    } else {
+      fieldBirthtime.classList.remove('has-error');
+    }
 
     const gender = document.querySelector('input[name="gender"]:checked');
     if (!gender) {
@@ -825,40 +805,33 @@
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>접수 중...';
 
-    // 회고록 수집
-    const memoirRows = document.querySelectorAll('.memoir-row');
-    const memoir = [];
-    memoirRows.forEach(row => {
-      const year = row.querySelector('.memoir-year').value.trim();
-      const event = row.querySelector('.memoir-event').value.trim();
-      if (year || event) memoir.push({ year, event });
-    });
-
     // 풀이 항목 수집
     const items = Array.from(document.querySelectorAll('input[name="items"]:checked')).map(i => i.value);
 
     const receiptId = genId();
+    const ampmVal = document.querySelector('input[name="ampm"]:checked')?.value || '모름';
+    const birthtimeVal = document.getElementById('birthtime').value;
 
     const data = {
       receiptId,
-      submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      submittedAt: firebase.database.ServerValue.TIMESTAMP,
       name: document.getElementById('name').value.trim(),
       contact: document.getElementById('contact').value.trim(),
       age: Number(document.getElementById('age').value),
       gender: document.querySelector('input[name="gender"]:checked').value,
       birthdate: document.getElementById('birthdate').value,
-      birthtime: document.getElementById('birthtime').value,
+      ampm: ampmVal,
+      birthtime: birthtimeVal || '',
       timeCertainty: document.getElementById('timeCertainty').value,
       calType: document.querySelector('input[name="calType"]:checked').value,
       requestItems: items,
-      memoir,
       message: document.getElementById('message').value.trim(),
       referral: document.getElementById('referral').value,
       status: '접수완료'
     };
 
     try {
-      await db.collection('saju_requests').doc(receiptId).set(data);
+      await db.ref('saju_applications/' + receiptId).set(data);
 
       // 성공 화면
       document.getElementById('sajuForm').style.display = 'none';
@@ -870,7 +843,7 @@
         <div><span class="key">접수번호</span><strong>${receiptId}</strong></div>
         <div><span class="key">성명</span>${data.name}</div>
         <div><span class="key">생년월일</span>${data.birthdate}${calTypeLabel}</div>
-        <div><span class="key">출생시각</span>${data.birthtime || '미입력'}</div>
+        <div><span class="key">출생시각</span>${data.birthtime ? `${data.ampm} ${data.birthtime}` : data.ampm}</div>
         <div><span class="key">성별</span>${data.gender}성</div>
       `;
 
