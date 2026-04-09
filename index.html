@@ -280,6 +280,25 @@
     font-weight: 500;
   }
 
+  /* ── 오전/오후 버튼 ── */
+  .ampm-btn {
+    padding: 0.5rem 1.1rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    background: var(--cream);
+    color: var(--ink-mid);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ampm-btn.active {
+    background: var(--gold-pale);
+    border-color: var(--gold);
+    color: var(--ink);
+    font-weight: 500;
+  }
+
   /* ── 체크박스 ── */
   .checkbox-list {
     display: flex;
@@ -594,42 +613,33 @@
 
         <div class="field" id="field-birthtime">
           <label>출생 시각 <span class="req">*</span></label>
-          <div class="radio-group">
-            <div class="radio-btn">
-              <input type="radio" name="ampm" id="ampm-am" value="오전">
-              <label for="ampm-am">오전 (子~午)</label>
-            </div>
-            <div class="radio-btn">
-              <input type="radio" name="ampm" id="ampm-pm" value="오후">
-              <label for="ampm-pm">오후 (午~子)</label>
-            </div>
-            <div class="radio-btn">
-              <input type="radio" name="ampm" id="ampm-unknown" value="모름" checked>
-              <label for="ampm-unknown">모름</label>
-            </div>
-          </div>
-          <div class="error-msg">출생 시각 또는 오전/오후를 선택해주세요.</div>
-        </div>
-
-        <div class="grid-2">
-          <div class="field">
-            <label>정확한 시각 <span class="opt">(선택)</span></label>
-            <div style="display:flex;gap:0.5rem;align-items:center;">
-              <input type="number" id="birthHour" placeholder="시" min="0" max="23" style="width:70px;">
-              <span style="color:var(--ink-muted);font-size:14px;">시</span>
-              <input type="number" id="birthMinute" placeholder="분" min="0" max="59" style="width:70px;">
-              <span style="color:var(--ink-muted);font-size:14px;">분</span>
-            </div>
-          </div>
-          <div class="field">
-            <label>시각 확실성</label>
-            <select id="timeCertainty">
-              <option value="정확">정확한 시각 알고 있음</option>
-              <option value="근사">대략적으로 앎 (±1시간)</option>
-              <option value="오전오후">오전/오후만 앎</option>
-              <option value="모름">전혀 모름</option>
+          <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;" id="birthtimeInputs">
+            <button type="button" class="ampm-btn" id="btn-am" onclick="selectAmPm('오전')">오전</button>
+            <button type="button" class="ampm-btn" id="btn-pm" onclick="selectAmPm('오후')">오후</button>
+            <select id="birthHour" style="width:80px;">
+              <option value="">-- 시</option>
+              <script>for(let h=1;h<=12;h++) document.write(`<option value="${h}">${h}시</option>`);</script>
+            </select>
+            <select id="birthMinute" style="width:80px;">
+              <option value="">-- 분</option>
+              <script>for(let m=0;m<60;m+=5) document.write(`<option value="${String(m).padStart(2,'0')}">${String(m).padStart(2,'0')}분</option>`);</script>
             </select>
           </div>
+          <label style="display:flex;align-items:center;gap:6px;margin-top:0.5rem;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="timeUnknown" onchange="toggleTimeUnknown(this)">
+            태어난 시간을 모릅니다
+          </label>
+          <div class="error-msg">출생 시각을 선택하거나 '모름'을 체크해주세요.</div>
+        </div>
+
+        <div class="field">
+          <label>시각 확실성</label>
+          <select id="timeCertainty">
+            <option value="정확">정확한 시각 알고 있음</option>
+            <option value="근사">대략적으로 앎 (±1시간)</option>
+            <option value="오전오후">오전/오후만 앎</option>
+            <option value="모름">전혀 모름</option>
+          </select>
         </div>
 
         <div class="field">
@@ -767,6 +777,26 @@
   const db = firebase.database();
   firebase.analytics();
 
+  // ── 오전/오후 선택 ──
+  let _ampmVal = '';
+  function selectAmPm(val) {
+    _ampmVal = val;
+    document.getElementById('btn-am').classList.toggle('active', val === '오전');
+    document.getElementById('btn-pm').classList.toggle('active', val === '오후');
+  }
+
+  function toggleTimeUnknown(cb) {
+    const inputs = document.getElementById('birthtimeInputs');
+    inputs.style.opacity = cb.checked ? '0.35' : '1';
+    inputs.style.pointerEvents = cb.checked ? 'none' : '';
+    if (cb.checked) {
+      document.getElementById('btn-am').classList.remove('active');
+      document.getElementById('btn-pm').classList.remove('active');
+      document.getElementById('birthHour').value = '';
+      document.getElementById('birthMinute').value = '';
+    }
+  }
+
   // ── 접수번호 생성 ──
   function genId() {
     const d = new Date();
@@ -793,10 +823,10 @@
     checkField('field-age', 'age', v => v.length > 0 && Number(v) > 0);
     checkField('field-birthdate', 'birthdate', v => v.length > 0);
 
-    const ampm = document.querySelector('input[name="ampm"]:checked');
-    const birthtimeVal = document.getElementById('birthtime').value;
+    const timeUnknown = document.getElementById('timeUnknown').checked;
+    const ampmSelected = document.getElementById('btn-am').classList.contains('active') || document.getElementById('btn-pm').classList.contains('active');
     const fieldBirthtime = document.getElementById('field-birthtime');
-    if (!birthtimeVal && (!ampm || ampm.value === '모름')) {
+    if (!timeUnknown && !ampmSelected) {
       fieldBirthtime.classList.add('has-error');
       ok = false;
     } else {
@@ -825,10 +855,11 @@
     const items = Array.from(document.querySelectorAll('input[name="items"]:checked')).map(i => i.value);
 
     const receiptId = genId();
-    const ampmVal = document.querySelector('input[name="ampm"]:checked')?.value || '모름';
+    const timeUnknown = document.getElementById('timeUnknown').checked;
+    const ampmVal = timeUnknown ? '모름' : (document.getElementById('btn-am').classList.contains('active') ? '오전' : '오후');
     const hourVal = document.getElementById('birthHour').value;
     const minVal = document.getElementById('birthMinute').value;
-    const birthtimeVal = (hourVal !== '' || minVal !== '') ? `${hourVal || '0'}시 ${minVal || '0'}분` : '';
+    const birthtimeVal = (!timeUnknown && hourVal) ? `${hourVal}시 ${minVal || '00'}분` : '';
 
     const data = {
       receiptId,
