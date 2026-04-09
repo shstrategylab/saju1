@@ -560,6 +560,11 @@
         </div>
 
         <div class="field">
+          <label>이메일 <span class="opt">(선택)</span></label>
+          <input type="text" id="email" placeholder="example@email.com" maxlength="100">
+        </div>
+
+        <div class="field">
           <label>성별 <span class="req">*</span></label>
           <div class="radio-group">
             <div class="radio-btn">
@@ -589,7 +594,7 @@
 
         <div class="field" id="field-birthtime">
           <label>출생 시각 <span class="req">*</span></label>
-          <div class="radio-group" style="margin-bottom:0.6rem;">
+          <div class="radio-group">
             <div class="radio-btn">
               <input type="radio" name="ampm" id="ampm-am" value="오전">
               <label for="ampm-am">오전 (子~午)</label>
@@ -603,17 +608,28 @@
               <label for="ampm-unknown">모름</label>
             </div>
           </div>
-          <input type="time" id="birthtime" step="600" placeholder="정확한 시각을 아는 경우 입력">
           <div class="error-msg">출생 시각 또는 오전/오후를 선택해주세요.</div>
         </div>
-        <div class="field">
-          <label>시각 확실성</label>
-          <select id="timeCertainty">
-            <option value="정확">정확한 시각 알고 있음</option>
-            <option value="근사">대략적으로 앎 (±1시간)</option>
-            <option value="오전오후">오전/오후만 앎</option>
-            <option value="모름">전혀 모름</option>
-          </select>
+
+        <div class="grid-2">
+          <div class="field">
+            <label>정확한 시각 <span class="opt">(선택)</span></label>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <input type="number" id="birthHour" placeholder="시" min="0" max="23" style="width:70px;">
+              <span style="color:var(--ink-muted);font-size:14px;">시</span>
+              <input type="number" id="birthMinute" placeholder="분" min="0" max="59" style="width:70px;">
+              <span style="color:var(--ink-muted);font-size:14px;">분</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>시각 확실성</label>
+            <select id="timeCertainty">
+              <option value="정확">정확한 시각 알고 있음</option>
+              <option value="근사">대략적으로 앎 (±1시간)</option>
+              <option value="오전오후">오전/오후만 앎</option>
+              <option value="모름">전혀 모름</option>
+            </select>
+          </div>
         </div>
 
         <div class="field">
@@ -810,13 +826,16 @@
 
     const receiptId = genId();
     const ampmVal = document.querySelector('input[name="ampm"]:checked')?.value || '모름';
-    const birthtimeVal = document.getElementById('birthtime').value;
+    const hourVal = document.getElementById('birthHour').value;
+    const minVal = document.getElementById('birthMinute').value;
+    const birthtimeVal = (hourVal !== '' || minVal !== '') ? `${hourVal || '0'}시 ${minVal || '0'}분` : '';
 
     const data = {
       receiptId,
       submittedAt: firebase.database.ServerValue.TIMESTAMP,
       name: document.getElementById('name').value.trim(),
       contact: document.getElementById('contact').value.trim(),
+      email: document.getElementById('email').value.trim(),
       age: Number(document.getElementById('age').value),
       gender: document.querySelector('input[name="gender"]:checked').value,
       birthdate: document.getElementById('birthdate').value,
