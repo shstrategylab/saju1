@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정통명리학 사주풀이 — 접수</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500;700&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1208;
+    --ink-mid: #3d2f1a;
+    --ink-muted: #7a6a52;
+    --gold: #b8860b;
+    --gold-light: #d4a843;
+    --gold-pale: #f5e9cc;
+    --cream: #faf6ee;
+    --cream-dark: #f0e8d4;
+    --red: #8b1a1a;
+    --red-pale: #f5e6e6;
+    --border: rgba(184,134,11,0.25);
+    --border-strong: rgba(184,134,11,0.5);
+    --shadow: 0 4px 24px rgba(26,18,8,0.08);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.7;
+  }
+
+  /* ── 배경 패턴 ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(184,134,11,0.06) 0%, transparent 50%),
+      radial-gradient(circle at 85% 80%, rgba(139,26,26,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 1.5rem 4rem;
+  }
+
+  /* ── 헤더 ── */
+  header {
+    text-align: center;
+    padding: 3.5rem 0 2.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2.5rem;
+  }
+
+  .tagial {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    font-family: 'Noto Serif KR', serif;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    line-height: 1.3;
+    color: var(--ink);
+    margin-bottom: 0.75rem;
+  }
+
+  h1 span {
+    color: var(--gold);
+  }
+
+  .header-sub {
+    font-size: 14px;
+    color: var(--ink-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .emblem {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 1.25rem;
+  }
+
+  /* ── 안내 카드 ── */
+  .info-card {
+    background: var(--cream-dark);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: 4px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+    font-size: 13.5px;
+    color: var(--ink-mid);
+    line-height: 1.8;
+  }
+
+  .info-card strong {
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  /* ── 폼 섹션 ── */
+  .section {
+    margin-bottom: 2.25rem;
+  }
+
+  .section-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: 0.08em;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .section-title::before {
+    content: '';
+    display: inline-block;
+    width: 18px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .section-title .num {
+    font-size: 11px;
+    color: var(--gold);
+    font-family: 'Noto Sans KR', sans-serif;
+    letter-spacing: 0.1em;
+    margin-left: auto;
+    opacity: 0.7;
+  }
+
+  /* ── 폼 카드 ── */
+  .form-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+  }
+
+  .field {
+    margin-bottom: 1.25rem;
+  }
+
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+  }
+
+  label .req {
+    color: var(--red);
+    margin-left: 2px;
+  }
+
+  label .opt {
+    font-weight: 300;
+    font-size: 11px;
+    margin-left: 4px;
+    opacity: 0.7;
+  }
+
+  input[type="text"],
+  input[type="date"],
+  input[type="time"],
+  input[type="number"],
+  input[type="tel"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    transition: border-color 0.2s, background 0.2s;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--gold);
+    background: #fff;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.7;
+  }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b8860b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 2rem;
+    cursor: pointer;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  @media (max-width: 500px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+
+  /* ── 라디오 버튼 ── */
+  .radio-group {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .radio-btn {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  .radio-btn input { display: none; }
+
+  .radio-btn label {
+    display: block;
+    text-align: center;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    font-size: 13.5px;
+    color: var(--ink-mid);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.15s;
+    margin-bottom: 0;
+    background: var(--cream);
+  }
+
+  .radio-btn input:checked + label {
+    background: var(--gold-pale);
+    border-color: var(--gold);
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* ── 체크박스 ── */
+  .checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--ink-mid);
+    line-height: 1.5;
+  }
+
+  .check-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    accent-color: var(--gold);
+    margin-top: 2px;
+    cursor: pointer;
+  }
+
+  /* ── 회고록 ── */
+  .memoir-entries { }
+
+  .memoir-row {
+    display: grid;
+    grid-template-columns: 90px 1fr 32px;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+    align-items: center;
+  }
+
+  .memoir-row input[type="text"] { font-size: 13px; }
+
+  .btn-remove {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--ink-muted);
+    width: 32px;
+    height: 36px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    padding: 0;
+  }
+
+  .btn-remove:hover {
+    border-color: var(--red);
+    color: var(--red);
+    background: var(--red-pale);
+  }
+
+  .btn-add {
+    margin-top: 0.75rem;
+    background: none;
+    border: 1px dashed var(--border-strong);
+    border-radius: 4px;
+    color: var(--gold);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.15s;
+  }
+
+  .btn-add:hover {
+    background: var(--gold-pale);
+    border-color: var(--gold);
+  }
+
+  /* ── 제출 버튼 ── */
+  .submit-wrap {
+    text-align: center;
+    margin-top: 2.5rem;
+  }
+
+  .btn-submit {
+    background: var(--gold);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    padding: 0.85rem 3rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 12px rgba(184,134,11,0.3);
+  }
+
+  .btn-submit:hover {
+    background: #9a720a;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(184,134,11,0.4);
+  }
+
+  .btn-submit:active {
+    transform: translateY(0);
+  }
+
+  .btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .submit-note {
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-top: 0.75rem;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── 완료 화면 ── */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 4rem 1.5rem;
+  }
+
+  .success-screen.active { display: block; }
+
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1.5rem;
+  }
+
+  .success-screen h2 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    color: var(--ink);
+  }
+
+  .success-screen p {
+    color: var(--ink-muted);
+    font-size: 14px;
+    line-height: 1.9;
+  }
+
+  .receipt-box {
+    margin: 1.5rem auto;
+    max-width: 360px;
+    background: var(--cream-dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    font-size: 13px;
+    text-align: left;
+    color: var(--ink-mid);
+    line-height: 2;
+  }
+
+  .receipt-box .key {
+    color: var(--ink-muted);
+    display: inline-block;
+    min-width: 70px;
+  }
+
+  /* ── 구분선 ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0.5rem 0 1.5rem;
+  }
+
+  /* ── 푸터 ── */
+  footer {
+    text-align: center;
+    padding: 1.5rem 0;
+    font-size: 12px;
+    color: var(--ink-muted);
+    border-top: 1px solid var(--border);
+    letter-spacing: 0.05em;
+    margin-top: 3rem;
+  }
+
+  /* ── 로딩 ── */
+  .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-msg {
+    color: var(--red);
+    font-size: 12px;
+    margin-top: 0.4rem;
+    display: none;
+  }
+
+  .field.has-error input,
+  .field.has-error select,
+  .field.has-error textarea {
+    border-color: var(--red);
+  }
+
+  .field.has-error .error-msg { display: block; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- 헤더 -->
+  <header>
+    <div class="tagial">정통 명리학 · 사주 연구소</div>
+    <svg class="emblem" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="24" cy="24" r="22" stroke="#b8860b" stroke-width="1"/>
+      <circle cx="24" cy="24" r="16" stroke="#b8860b" stroke-width="0.5" stroke-dasharray="2 3"/>
+      <!-- 태극 라인 -->
+      <path d="M24 8 C24 8 32 16 24 24 C16 32 24 40 24 40" stroke="#b8860b" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="24" cy="16" r="3" fill="#b8860b" opacity="0.8"/>
+      <circle cx="24" cy="32" r="3" fill="none" stroke="#b8860b" stroke-width="1"/>
+      <!-- 괘 라인들 -->
+      <line x1="10" y1="14" x2="14" y2="14" stroke="#b8860b" stroke-width="1" stroke-linecap="round"/>
+      <line x1="10" y1="17" x2="14" y2="17" stroke="#b8860b" stroke-width="1" stroke-linecap="round"/>
+      <line x1="34" y1="31" x2="38" y2="31" stroke="#b8860b" stroke-width="1" stroke-linecap="round"/>
+      <line x1="34" y1="34" x2="38" y2="34" stroke="#b8860b" stroke-width="1" stroke-linecap="round"/>
+    </svg>
+    <h1>사주팔자 <span>풀이</span> 접수</h1>
+    <p class="header-sub">생년월일시로 읽는 삶의 흐름</p>
+  </header>
+
+  <!-- 메인 폼 -->
+  <form id="sajuForm">
+
+    <!-- 안내 -->
+    <div class="info-card">
+      <strong>정확한 풀이를 위해</strong> 태어난 시각을 최대한 정확히 입력해주세요.<br>
+      모르시는 경우 가장 근접한 시간대를 선택하시거나 '모름'을 선택하시면 됩니다.<br>
+      입력하신 정보는 풀이 목적으로만 사용됩니다.
+    </div>
+
+    <!-- 01. 기본 정보 -->
+    <div class="section">
+      <div class="section-title">기본 정보 <span class="num">01</span></div>
+      <div class="form-card">
+
+        <div class="field" id="field-name">
+          <label>이름 (또는 닉네임) <span class="req">*</span></label>
+          <input type="text" id="name" placeholder="홍길동" maxlength="30">
+          <div class="error-msg">이름을 입력해주세요.</div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field" id="field-contact">
+            <label>연락처 <span class="opt">(선택)</span></label>
+            <input type="tel" id="contact" placeholder="010-0000-0000" maxlength="20">
+          </div>
+          <div class="field" id="field-age">
+            <label>현재 나이 <span class="req">*</span></label>
+            <input type="number" id="age" placeholder="만 나이" min="1" max="120">
+            <div class="error-msg">나이를 입력해주세요.</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>성별 <span class="req">*</span></label>
+          <div class="radio-group">
+            <div class="radio-btn">
+              <input type="radio" name="gender" id="g-male" value="남">
+              <label for="g-male">남성</label>
+            </div>
+            <div class="radio-btn">
+              <input type="radio" name="gender" id="g-female" value="여">
+              <label for="g-female">여성</label>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 02. 생년월일시 -->
+    <div class="section">
+      <div class="section-title">생년월일 및 출생 시각 <span class="num">02</span></div>
+      <div class="form-card">
+
+        <div class="field" id="field-birthdate">
+          <label>생년월일 <span class="req">*</span></label>
+          <input type="date" id="birthdate">
+          <div class="error-msg">생년월일을 입력해주세요.</div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field" id="field-birthtime">
+            <label>출생 시각 <span class="req">*</span></label>
+            <input type="time" id="birthtime" step="600">
+            <div class="error-msg">출생 시각을 선택해주세요.</div>
+          </div>
+          <div class="field">
+            <label>시각 확실성</label>
+            <select id="timeCertainty">
+              <option value="정확">정확한 시각 알고 있음</option>
+              <option value="근사">대략적으로 앎 (±1시간)</option>
+              <option value="오전오후">오전/오후만 앎</option>
+              <option value="모름">전혀 모름</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>양력 / 음력</label>
+          <div class="radio-group">
+            <div class="radio-btn">
+              <input type="radio" name="calType" id="cal-solar" value="양력" checked>
+              <label for="cal-solar">양력</label>
+            </div>
+            <div class="radio-btn">
+              <input type="radio" name="calType" id="cal-lunar" value="음력">
+              <label for="cal-lunar">음력</label>
+            </div>
+            <div class="radio-btn">
+              <input type="radio" name="calType" id="cal-lunar-leap" value="음력 윤달">
+              <label for="cal-lunar-leap">음력 윤달</label>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 03. 풀이 요청 항목 -->
+    <div class="section">
+      <div class="section-title">풀이 요청 항목 <span class="num">03</span></div>
+      <div class="form-card">
+        <div class="checkbox-list">
+          <label class="check-item">
+            <input type="checkbox" name="items" value="1. 일간의 본질과 타고난 기질" checked>
+            <span>일간의 본질과 타고난 기질</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" name="items" value="2. 월지 환경과 격국" checked>
+            <span>월지 환경과 격국(格局)</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" name="items" value="3. 합충파해 관계" checked>
+            <span>주요 합충파해 관계와 삶에서의 발현</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" name="items" value="4. 신살 해석" checked>
+            <span>신살 해석 (역마·도화·현침 등)</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" name="items" value="5. 대운별 인생 흐름" checked>
+            <span>대운별 인생 흐름 (10년 단위, 사건 예측 포함)</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" name="items" value="6. 현재 대운+세운 조합 분석" checked>
+            <span>현재 대운 + 세운 조합 분석</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" name="items" value="7. 용신과 기신" checked>
+            <span>용신(用神)과 기신(忌神) — 유리·불리한 기운</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" name="items" value="8. 직업·재물·관계·건강 조언" checked>
+            <span>직업·재물·관계·건강 축별 핵심 조언</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 04. 삶의 사건 회고록 -->
+    <div class="section">
+      <div class="section-title">삶의 사건 회고록 <span class="num">04</span></div>
+      <div class="form-card">
+        <p style="font-size:13px;color:var(--ink-muted);margin-bottom:1rem;line-height:1.8;">
+          기억에 남는 삶의 주요 사건을 연도·나이와 함께 적어주세요.<br>
+          실제 사건과 대운·세운을 대조해 더 정밀한 풀이를 드릴 수 있습니다. <em style="opacity:0.7;">(선택)</em>
+        </p>
+
+        <div class="memoir-entries" id="memoirEntries">
+          <div class="memoir-row">
+            <input type="text" placeholder="연도/나이" class="memoir-year">
+            <input type="text" placeholder="사건 내용 (예: 이직, 결혼, 사업 시작…)" class="memoir-event">
+            <button type="button" class="btn-remove" onclick="removeMemoir(this)">×</button>
+          </div>
+        </div>
+        <button type="button" class="btn-add" onclick="addMemoir()">+ 사건 추가</button>
+      </div>
+    </div>
+
+    <!-- 05. 추가 메시지 -->
+    <div class="section">
+      <div class="section-title">추가 전달 사항 <span class="num">05</span></div>
+      <div class="form-card">
+        <div class="field">
+          <label>궁금하신 점 또는 특별히 살펴봐 주셨으면 하는 부분 <span class="opt">(선택)</span></label>
+          <textarea id="message" placeholder="예: 올해 이직을 고려하고 있습니다. 시기가 언제가 좋을지 알고 싶습니다."></textarea>
+        </div>
+        <div class="field">
+          <label>접수 경로 <span class="opt">(선택)</span></label>
+          <select id="referral">
+            <option value="">선택해주세요</option>
+            <option value="지인 소개">지인 소개</option>
+            <option value="블로그">블로그</option>
+            <option value="인스타그램">인스타그램</option>
+            <option value="유튜브">유튜브</option>
+            <option value="네이버 카페">네이버 카페</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 제출 -->
+    <div class="submit-wrap">
+      <button type="submit" class="btn-submit" id="submitBtn">
+        접수하기
+      </button>
+      <p class="submit-note">접수 후 순서에 따라 풀이 결과를 안내해 드립니다.</p>
+    </div>
+
+  </form>
+
+  <!-- 완료 화면 -->
+  <div class="success-screen" id="successScreen">
+    <svg class="success-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="32" cy="32" r="30" stroke="#b8860b" stroke-width="1.5"/>
+      <path d="M20 32 L28 40 L44 24" stroke="#b8860b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h2>접수가 완료되었습니다</h2>
+    <p>소중한 정보를 남겨주셔서 감사합니다.<br>
+    순서에 따라 정성껏 풀이를 준비해 드리겠습니다.<br>
+    연락 주신 방법으로 결과를 전달드릴 예정입니다.</p>
+    <div class="receipt-box" id="receiptBox"></div>
+    <p style="margin-top:1rem;font-size:12px;color:var(--ink-muted);">접수 번호를 저장해두시면 문의 시 편리합니다.</p>
+  </div>
+
+</div>
+
+<!-- 푸터 -->
+<footer>
+  <div class="wrap">
+    정통명리학 사주연구소 &nbsp;·&nbsp; 모든 정보는 풀이 목적으로만 사용됩니다
+  </div>
+</footer>
+
+<script>
+  // ── Firebase 초기화 ──
+  const firebaseConfig = {
+    apiKey: "AIzaSyAE8rAFComcr9rHWQAIL_lrV5bQd8ucmU8",
+    authDomain: "saju-reading.firebaseapp.com",
+    projectId: "saju-reading",
+    storageBucket: "saju-reading.firebasestorage.app",
+    messagingSenderId: "1000224028532",
+    appId: "1:1000224028532:web:6bef82eaa25148bdb19e21",
+    measurementId: "G-M8JE7L6N99"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  firebase.analytics();
+
+  // ── 회고록 추가/삭제 ──
+  function addMemoir() {
+    const container = document.getElementById('memoirEntries');
+    const row = document.createElement('div');
+    row.className = 'memoir-row';
+    row.innerHTML = `
+      <input type="text" placeholder="연도/나이" class="memoir-year">
+      <input type="text" placeholder="사건 내용" class="memoir-event">
+      <button type="button" class="btn-remove" onclick="removeMemoir(this)">×</button>
+    `;
+    container.appendChild(row);
+  }
+
+  function removeMemoir(btn) {
+    const rows = document.querySelectorAll('.memoir-row');
+    if (rows.length > 1) {
+      btn.closest('.memoir-row').remove();
+    } else {
+      btn.closest('.memoir-row').querySelectorAll('input').forEach(i => i.value = '');
+    }
+  }
+
+  // ── 접수번호 생성 ──
+  function genId() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    return `SJ${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${Math.floor(Math.random()*9000+1000)}`;
+  }
+
+  // ── 유효성 검사 ──
+  function validate() {
+    let ok = true;
+
+    const checkField = (fieldId, inputId, check) => {
+      const field = document.getElementById(fieldId);
+      const val = document.getElementById(inputId).value.trim();
+      if (!check(val)) {
+        field.classList.add('has-error');
+        ok = false;
+      } else {
+        field.classList.remove('has-error');
+      }
+    };
+
+    checkField('field-name', 'name', v => v.length > 0);
+    checkField('field-age', 'age', v => v.length > 0 && Number(v) > 0);
+    checkField('field-birthdate', 'birthdate', v => v.length > 0);
+    checkField('field-birthtime', 'birthtime', v => v.length > 0);
+
+    const gender = document.querySelector('input[name="gender"]:checked');
+    if (!gender) {
+      alert('성별을 선택해주세요.');
+      ok = false;
+    }
+
+    return ok;
+  }
+
+  // ── 폼 제출 ──
+  document.getElementById('sajuForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>접수 중...';
+
+    // 회고록 수집
+    const memoirRows = document.querySelectorAll('.memoir-row');
+    const memoir = [];
+    memoirRows.forEach(row => {
+      const year = row.querySelector('.memoir-year').value.trim();
+      const event = row.querySelector('.memoir-event').value.trim();
+      if (year || event) memoir.push({ year, event });
+    });
+
+    // 풀이 항목 수집
+    const items = Array.from(document.querySelectorAll('input[name="items"]:checked')).map(i => i.value);
+
+    const receiptId = genId();
+
+    const data = {
+      receiptId,
+      submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      name: document.getElementById('name').value.trim(),
+      contact: document.getElementById('contact').value.trim(),
+      age: Number(document.getElementById('age').value),
+      gender: document.querySelector('input[name="gender"]:checked').value,
+      birthdate: document.getElementById('birthdate').value,
+      birthtime: document.getElementById('birthtime').value,
+      timeCertainty: document.getElementById('timeCertainty').value,
+      calType: document.querySelector('input[name="calType"]:checked').value,
+      requestItems: items,
+      memoir,
+      message: document.getElementById('message').value.trim(),
+      referral: document.getElementById('referral').value,
+      status: '접수완료'
+    };
+
+    try {
+      await db.collection('saju_requests').doc(receiptId).set(data);
+
+      // 성공 화면
+      document.getElementById('sajuForm').style.display = 'none';
+      const screen = document.getElementById('successScreen');
+      screen.classList.add('active');
+
+      const calTypeLabel = data.calType !== '양력' ? ` (${data.calType})` : '';
+      document.getElementById('receiptBox').innerHTML = `
+        <div><span class="key">접수번호</span><strong>${receiptId}</strong></div>
+        <div><span class="key">성명</span>${data.name}</div>
+        <div><span class="key">생년월일</span>${data.birthdate}${calTypeLabel}</div>
+        <div><span class="key">출생시각</span>${data.birthtime || '미입력'}</div>
+        <div><span class="key">성별</span>${data.gender}성</div>
+      `;
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (err) {
+      console.error(err);
+      alert('접수 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.\n' + err.message);
+      btn.disabled = false;
+      btn.innerHTML = '접수하기';
+    }
+  });
+</script>
+</body>
+</html>
